@@ -133,3 +133,84 @@ static class Student implements Comparable{
 }
 ```
 
+
+### 변환 - map()
+스트림의 요소들을 특정 형태로 변환해야 할 때 사용한다
+Stream.map() 함수의 선언부는 다음과 같다
+```java
+Stream<<R> map(Function<? super T, ? extends R> mapper)
+```
+다음은 Stream<File>을 매개변수로 받아 Stream<String>으로 변환하는 예시이다
+```java
+Stream<String> stringStream = fileStream.map(File::getName);
+```
+map은 중간 연산이므로 이를 중첩 사용하면 다음과 같이 파일들의 확장자를 출력하는 코드를 작성할 수 있다
+```java
+fileStream.map(File::getName)
+            .filter(s -> s.indexOf('.')!=-1)
+            .map(s -> s.subString(s.indexOf('.')+1))
+            .map(s -> s.toUpperCase)
+            .distinct()
+            .forEach(System.out::print);
+```
+
+### 조회 - peek()
+연산과 연산 사이에 올바르게 처리가 되었는지 확인하기 위해서 peek()를 사용하자
+forEach와 달리 스트림 요소들을 소모하지 않으므로 연산 사이에 여러 번 끼워 넣어도 문제가 되지 않는다
+```java
+fileStream.map(File::getName)
+            .filter(s -> s.indexOf('.')!=-1)
+            .peek(s -> System.out.println(s))           // 확장자가 없는 파일 제외하고 출력
+            .map(s -> s.subString(s.indexOf('.')+1))
+            .peek(s -> System.out.println(s))           // 확장자만 잘라 출력
+            .map(s -> s.toUpperCase)
+            .peek(s -> System.out.println(s))           // 확장자를 대문자로 변환해 출력
+            .distinct()
+            .forEach(System.out::print);
+```
+
+### 기본형 스트림 - mapToInt, mapToLong, mapToDouble
+기본적으로 스트림 연산은 Stream<T>타입의 스트림을 출력한다
+하지만 기본형 요소들을 출력하는 경우 다음과 같이 기본형 스트림을 사용하는 것이 더 편리하다
+다음과 같이 학생들의 총점을 더해 출력하는 경우를 생각해보자
+```java
+Stream<Integer> integerStream = studentStream.map(Student::getAge);
+for (Object o : integerStream.toArray()) {
+    sum += ((Integer) o).intValue();
+}
+
+```
+mapToInt 함수를 사용하면 Integer를 int로 변환할 필요가 없다
+또한 IntStream과 같은 기본형 스트림은 sum()과 같은 유용한 메서드를 제공한다
+```java
+int sum = studentStream.mapToInt(Student::getAge).sum();
+int avg = studentStream.mapToInt(Student::getAge).average();
+```
+이러한 메서드는 모두 최종 연산이므로 연속적인 사용이 불가능하다
+하지만 이러한 메서드는 같이 사용되는 경우가 많으므로 summaryStatistic() 라는 메서드가 제공된다
+```java
+IntSummaryStatistics stat = studentStream.mapToInt(Student::getAge).summaryStatistics();
+long totalCount = stat.getCount();
+long sum = stat.getSum();
+double avgScore = stat.getAverage();
+int minScore = stat.getMin();
+int maxScore = stat.getMax();
+```
+
+### 타입 변환 - flatMap(), toArray()
+스트림의 요소가 Stream<T> 가 아닌 Stream<T[]> 인 경우, 각 배열의 요소들에 대해 일괄적인 처리를 하기 어렵다
+만약 Stream<T[]>에 대해 map(Arrays::stream)을 사용하면, 다음과 같이 Stream<Stream<T>>를 반환한다
+```java
+Stream<String[]> stringArrayStream = Stream.of(["aaa","bbb"],["ccc","ddd"],["eee","fff"]);
+Stream<Stream<String>> stringStreamStream = stringArrayStream.map(Arrays::stream())
+```
+우리가 원하는 결과는 Stream<String>이므로 이를 얻으려면 flatMap()을 사용해야 한다
+```java
+Stream<String[]> stringArrayStream = Stream.of(["aaa","bbb"],["ccc","ddd"],["eee","fff"]);
+Stream<String> stringStreamStream = stringArrayStream.flatMap(Arrays::stream());
+```
+Stream<T> 타입을 다시 T[] 타입으로 변환하려면 toArray()메서드를 사용하면 된다
+toArray() 메서드의 반환 타입은 Object[]이므로 다음과 같이 생성자를 지정해 주어야 한다
+```java
+String[] stringArray = stringStream.toArray(String::new);
+```
