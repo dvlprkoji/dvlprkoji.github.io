@@ -62,6 +62,7 @@ requireLambda(myFunction);
 
 ### java.util.function패키지
 일반적으로 많이 사용되는 형식의 메서드는 java.util.function패키지에 함수형 인터페이스로 정의해 놓았다
+
 |함수형 인터페이스|메서드|설명|
 |---|---|---|
 |java.lang.Runnable|void run()|매개변수도 없고 반환값도 없음|
