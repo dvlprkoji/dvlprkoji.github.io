@@ -1,6 +1,6 @@
 ---
 title: 스프링 컨테이너(Container)와 스프링 빈(Bean)
-date: 2021-09-278 00:00:01
+date: 2021-09-28 00:00:01
 categories: [Spring, Core]
 tags: [spring, container, bean]     # TAG names should always be lowercase
 ---
