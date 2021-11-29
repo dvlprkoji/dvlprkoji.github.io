@@ -19,3 +19,7 @@ tags: [dictionary]     # TAG names should always be lowercase
 
 #### 애플리케이션 컨텍스트
 - 빈 팩토리를 확장한 IoC 컨테이너
+
+
+#### 컨테이너, IOC 컨테이너
+- IoC 방식으로 빈을 관리하는 어플리케이션 컨텍스트
