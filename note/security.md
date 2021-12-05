@@ -1,4 +1,4 @@
-`
+
 
 #6장. 웹어플리케이션 보안
 
@@ -177,7 +177,101 @@ Compressor, Protector
 
 # 8장. 침해사고분석 및 디지털포렌식
 
-침해사고분석
+침해사고분석 절차
+
+정보 수집 단계 :
+  시스템 정보 수집 : 메모리 스냅샷
+  네트워크 기반 정보 수집
+
+윈도우 침해사고 정보 수집 및 분석 방법
+  시스템 로그를 지우더라도 로그 서버에는 남아 있도록 한다
+
+**휘발성 정보, 비휘발성 정보**
+휘발성 정보 : 껐을 때 없어지는 데이터
+압수수색시
+
+**침해사고 대응 방법**
+reactive : 터진 뒤 대응
+preactive : 사전 대응
+
+False-Positive를 줄이는 것이 중요
+
+**AI 시스템 (SOAR) : 인공지능 이용**
+
+디지털 포렌식
+
+디지털 증거 : 법적 증거를 가지기 위해 논리적이고 표준화된 절차로 진행
+
+디지털 포렌식의 5대 원칙
+정당성의 원칙
+재현의 원칙
+연계성의 원칙
+무결성의 원칙
+신속성의 원칙
 
 디지털 증거의 4대 원칙
+진정성 범죄 현장에 그 데이터가 존재해야   한다
+무결성 조작이 안되었느냐
+원본성 원본이 맞냐
+신뢰성 신뢰할만한 데이터냐
 
+
+# 9장-1. 사이버보안에서의 적대적 공격 및 대응 방안
+
+Introduction
+  알고리즘 + 학습 데이터 -> 학습된 정보 (learned parameters)
+  ML을 통해 사이버 보안문제를 해결
+
+Taxonomy of Attacks
+  공격자가 머신 러닝을 공격하는 방법
+    poisoning attack : training 데이터를 오염
+    evasion attack : 잘못된 결정을 하도록 만드는 샘플을 사용한다
+    model extraction stealing : Model을 추출, 스틸
+
+Blackbox vs Whitebox Attack
+  공격자가 모를 때 : Blackbox attack, query
+  알 때 : Whitebox, back propagation, query
+
+Machine Learning : Security & privacy
+  GAN (Generative Adversarial Network)
+
+GAN
+  Generator : Discriminator를 속이기 위한 가짜 데이터를 생성
+  Discriminator : 진짜와 가짜를 판별
+
+Adversarial Attack
+  Evasion attack : 테스트시 교란을 통해 샘플을 잘못 분류시킴
+    non-targeted : 오분류만 하게끔 한다 (올바른 예측)
+    targeted : 공격자가 원하는 특정한 클래스로 유도하여 틀린 예측을 하게 한다
+    무작위 섭동(random perturbation) : random noize를 준다
+    FGSM(Fast Gradien Sign Method) : 손실의 기울기를 최대화하는 이미지 생성
+
+Poisoning Attack : 의도적으로 유해한 학습 데이터를 주입
+Backdoor(Trojan) Attack : 잘못된 네트워크를 병합하여 잘못 동작하도록 한다
+Transferable Attack : 타겟 모델을 학습한 대체 모델을 사용해 적대적 예제를 생성
+Model Stealing/Extraction : 쿼리를 계속 던지면서, 결과값을 분석해 유사한 모델을 생성
+Further attack : 도용한 모델에 대한 적대적 샘플을 생성하면 실제 모델을 생성할 수 있다
+Attribute Inference & Model Inversion : 숨겨야할 데이터를 찾을 수 있다
+
+**공격 정리**
+- Poisoning Attack : 데이터 자체를 오염
+- Evasion Attack : 입력 데이터에 Noise를 줘서 잘못 오분류하게 만드는 것
+- Model Extraction Attack : 쿼리를 던져 얻은 output을 종합해 대체 모델을 생성
+- Model Inversion : Query로 얻은 값을 가지고 반대로 Training Data를 찾아낸다
+
+**방어 정리**
+- Adversarial Retraining : Training stage에서 적대적 예제를 포함시킨다, DNN의 견고함을 향상
+- Adversarial Detection : 적대적 예제로 감지되는 경우 차단한다, 탐지기로 이상 ReLU 활성화를 확인하여 탐지한다
+- Network Distillation : 큰 모델에서 정확도를 유지하며 작은 모델을 만들며 DNN의 민감도를 낮출 수 있다면
+                        Perturbation Noise에 의한 Cross boundary를 줄일 수 있다
+- Input Reconstruction : 적대적 예제를 reconstruction을 통해 clean data로 변환한다 (AutoEncoder)
+
+이미지에서는 제약이 없고
+악성코드는 constraint domain이다
+
+**Trust AI**
+- robust한 알고리즘 필요 (공격에 강인한)
+- explainability (AI의 결정은 설명이 가능해야 한다)
+- AI ethics 결정 알고리즘이 공익/사익을 추구하도록 하는 것
+
+# 10장. 클라우드 보안 이슈와 인증제도

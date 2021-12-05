@@ -1,9 +1,65 @@
+## 1. 설계 원칙 4가지를 설명하시오
+## 2. voting app example
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: redis
+  name: redis
+  namespace: vote
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - image: redis:alpine
+        name: redis
+        ports:
+        - containerPort: 6379
+          name: redis
+        volumeMounts:
+        - mountPath: /data
+          name: redis-data
+      volumes:
+      - name: redis-data
+        emptyDir: {}
+```
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: redis
+  name: redis
+  namespace: vote
+spec:
+  type: ClusterIP
+  ports:
+  - name: "redis-service"
+    port: 6379
+    targetPort: 6379
+  selector:
+    app: redis
+```
+
+1. Declarative rather than
+
+
 기말시험 : 전체 범위
+
+
 
 principle 1. Delarative
 
 원하는 상태를 서술한다
-
 
 각각의 오브젝트, 리소스들이 뭐가 있고 무엇을 하는것인가
 그것을 서술하는데 yaml 포맷으로 서술한다 이런것들 공부
@@ -49,9 +105,9 @@ NFV Reference Model, Kubernetes Reference Model
 
 
 
-=========================================================================================================
+========================================================================================
 
-1. Daemonset
+## 1. Daemonset
 - 용도 : 클러스터 전체에 포드를 띄울 때 사용
 - ```spec.selector```는 ```spec.template.metadata.labels``` 와 동일해야 한다
 ```yaml
@@ -71,9 +127,7 @@ spec:
       labels:
         name: fluentd-elasticsearch
     spec:
-      tolerations:
-      # this toleration is to have the daemonset runnable on master nodes
-      # remove it if your masters can't run pods
+      tolerations:    # 마스터 노드에서 실행시킬 때 사용
       - key: node-role.kubernetes.io/master
         operator: Exists
         effect: NoSchedule
@@ -102,7 +156,8 @@ spec:
           path: /var/lib/docker/containers
 ```
 
-2. StatefulSet(https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=isc0304&logNo=221885403537)
+## 2. StatefulSet
+(https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=isc0304&logNo=221885403537)
 - 용도 : 포드를 영구적으로 유지하고 싶을 경우 사용
 - 포드 네트워크 아이디를 유지하기 위해 헤드리스 서비스 필요
 - 안정적인 스토리지 제공을 위해 PVC 필요
@@ -129,8 +184,8 @@ spec:
   selector:
     matchLabels:
       app: nginx # has to match .spec.template.metadata.labels
-  serviceName: "nginx"
-  replicas: 3 # by default is 1
+  serviceName: "nginx"      # 연결하고자 하는 헤드레스 서비스 지정
+  replicas: 3
   template:
     metadata:
       labels:
@@ -146,7 +201,7 @@ spec:
           volumeMounts:
             - name: www
               mountPath: /usr/share/nginx/html
-  volumeClaimTemplates:
+  volumeClaimTemplates:   # 안정적인 스토리지 제공을 위해 PVC를 작성
     - metadata:
         name: www
       spec:
@@ -157,7 +212,7 @@ spec:
             storage: 1Gi
 ```
 
-3. Job, CronJob
+## 3. Job, CronJob
 - 용도 : 하나 이상의 Pod를 생성하고 성공적으로 종료될때 까지 재시도하기 위해 사용
 - restartPolicy : onFailure(실패시 자기 자신을 재시작), Never(실패시 새로 생성)
 - backoffLimit : 실패시 재시도 횟수
@@ -167,7 +222,7 @@ kind: Job
 metadata:
   name: pi
 spec:
-  complettions: 3     # job 성공 기준
+  completions: 3     # job 성공 기준
     parallelism: 3    # 한번에 실행시키는 pod 개수
   template:
     spec:
@@ -202,7 +257,7 @@ spec:
           restartPolicy: OnFailure
 ```
 
-4. emptyDir, hostPath
+## 4. emptyDir, hostPath
 - 용도 : Pod가 사라지면 볼륨도 사라지는 임시 볼륨
 ```yaml
 apiVersion: v1
@@ -241,7 +296,7 @@ spec:
       # this field is optional
       type: Directory
 ```
-5. configMap
+## 5. configMap
 용도 : 컨테이너에서 필요한 환경설정 내용을 컨테이너와 분리하여 제공하기 위한 기능 (key-value 형식)
 ```yaml
 apiVersion: v1
@@ -303,7 +358,7 @@ spec:
         - key: "user-interface.properties"
           path: "user-interface.properties"
 ```
-6. Secret
+## 6. Secret
 용도 : 민감한 정보를 노출하지 않기 위해
 ```yaml
 apiVersion: v1
@@ -334,17 +389,179 @@ spec:
     secret:
       secretName: mysecret
 ```
-7. DownwardAPI
+## 7. DownwardAPI
 용도 : Pod 생성 후 가지는 속성들을 환경변수나 볼륨에 제공
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: downward-env
+spec:
+  containers:
+  - name: main
+    image: busybox
+    command: ["sleep", "99999"]
+    resources:
+      requests:
+        cpu: 15m
+        memory: 100Ki
+      limits:
+        cpu: 100m
+        memory: 20Mi
+    env:
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: POD_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+    - name: POD_IP
+      valueFrom:
+        fieldRef:
+          fieldPath: status.podIP
+    - name: NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+    - name: SERVICE_ACCOUNT
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.serviceAccountName
+    - name: CONTAINER_CPU_REQUEST_MILLICORES
+      valueFrom:
+        resourceFieldRef:
+          resource: requests.cpu
+          divisor: 1m
+    - name: CONTAINER_MEMORY_LIMIT_KIBIBYTES
+      valueFrom:
+        resourceFieldRef:
+          resource: limits.memory
+          divisor: 1Ki
+```
 
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: downward-volume
+  labels:
+    foo: bar
+  annotations:
+    key1: value1
+    key2: |
+      multi
+      line
+      value
+spec:
+  containers:
+  - name: main
+    image: busybox
+    command: ["sleep", "9999999"]
+    resources:
+      requests:
+        cpu: 15m
+        memory: 100Ki
+      limits:
+        cpu: 100m
+        memory: 40Mi
+    volumeMounts:
+    - name: downward
+      mountPath: /etc/downward
+  volumes:
+  - name: downward
+    downwardAPI:
+      items:
+      - path: "podName"
+        fieldRef:
+          fieldPath: metadata.name
+      - path: "podNamespace"
+        fieldRef:
+          fieldPath: metadata.namespace
+      - path: "labels"
+        fieldRef:
+          fieldPath: metadata.labels
+      - path: "annotations"
+        fieldRef:
+          fieldPath: metadata.annotations
+      - path: "containerCpuRequestMilliCores"
+        resourceFieldRef:
+          containerName: main
+          resource: requests.cpu
+          divisor: 1m
+      - path: "containerMemoryLimitBytes"
+        resourceFieldRef:
+          containerName: main
+          resource: limits.memory
+          divisor: 1
+```
 
-8. Horizontal Pod Autoscaler
+## 8. Horizontal Pod Autoscaler
 용도 : 리소스 사용량을 관찰하여 파드 개수를 자동으로 스케일링
+```yaml
+apiVersion: autoscailing/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: helloworld-boot-hpa
+  labels:
+    app: helloworld-boot-hpa
+spec:
+  minReplicas: 1
+  maxReplicas: 10
+
+  # Scale할 조건
+  metrics:
+    - resource:
+        name: cpu
+        targetAverageUtilization: 5
+      type: Resource
+
+  # Scale할 ReplicaSet 설정
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: helloworld-boot-deployment-hpa
+```
+
+## 9. Vertical Pod Autoscaler
+용도 : 리소스 사용량을 관찰하여 리소스 자원을 자동으로 스케일링
+```yaml
+apiVersion: "autoscaling.k8s.io/v1beta2"
+kind: VerticalPodAutoscaler
+metadata:
+  name: hamster-vpa
+spec:
+  targetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: hamster
+  resourcePolicy:
+    containerPolicies:
+      - containerName: '*'
+        minAllowed:
+          cpu: 100m
+          memory: 50Mi
+        maxAllowed:
+          cpu: 1
+          memory: 500Mi
+        controlledResources: ["cpu", "memory"]
+```
 
 
-9. PodDisruptionBudget
+## 10. PodDisruptionBudget
 용도 : Pod 중단 허용 범위를 설정
-
+```yaml
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: zk-pdb
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: zookeeper
+```
 
 
 ==============================================================================================
@@ -357,3 +574,33 @@ VNF, CNF
 
 NFV 참조모델
 MANO : NFV Management and Orchestration
+
+인터페이스 이름을 외울 필요는 없다
+
+머신 위에 가상화 해서 가상 머신 위에 VNF가 돌고 있다
+서비스, VNF, Description : yaml 파일, 스펙을 보고 인프라 안에 만들면 자동으로 생기는 것
+VNF Manager
+  Description을 읽어서 생성하는 것
+  Virtual Machine (OpenStack) 시절에는 명령을 내려 실제로 만들어야 했다
+  여러 Pod를 동시에 만드는 패키지화 된 것들 like helm
+Orchestration : 연결하는 것, like service mesh, istio
+Virtualized Infra Manager : Openstack or Kubernetes
+
+
+Kubernetes Version
+
+VNF 대신 CNF
+Virtual Machine이 아니라 Virtual Machine 위에 Kubernetes Worker Node로 동작
+내부에는 Kubelet, kube-proxy, ...
+
+### NFV Reference Model, Kubernetes Reference Model의 구조를 설명하시오
+
+MANO : NFV Management and Orchestration
+
+Orchestration : Service Mesh, Istio와 같이 연결하는 기능
+VNF Manager : Description을 읽어 Pod를 생성한다 like helm
+Virtualized Infra Manager : Openstack, Kubernetes 와 같이 가상화 장치를 Manage 한다
+
+
+![img.png](img.png)
+
