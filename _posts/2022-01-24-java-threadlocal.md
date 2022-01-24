@@ -1,5 +1,5 @@
 ---
-title: title
+title: 자바 쓰레드 로컬(ThreadLocal)
 date: 2022-01-24 00:00:01
 categories: [Java]
 tags: [java, threadlocal]     # TAG names should always be lowercase
